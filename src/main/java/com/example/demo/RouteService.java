@@ -1,23 +1,57 @@
 package com.example.demo;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.InputStream;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class RouteService {
+    private final List<Route> routes = new ArrayList<>();
 
-    public List<Route> findRoutes(String origin, String destination) {
-        // Hardcoded example data - ideally, this would come from a database
-        List<Route> routes = new ArrayList<>();
+    public RouteService() { loadRoutesFromFile(); }
 
-        routes.add(new Route(Arrays.asList("SOF", "LON", "MLE"), 30));
-        routes.add(new Route(Arrays.asList("SOF", "MLE"), 70));
+    private void loadRoutesFromFile() {
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("routes.txt");
+        if (inputStream == null) throw new RuntimeException("File not found!");
 
-        // Sort by price in ascending order
-        routes.sort((r1, r2) -> Integer.compare(r1.getPrice(), r2.getPrice()));
+        try (Scanner scanner = new Scanner(inputStream)) {
+            while (scanner.hasNextLine()) {
+                String[] parts = scanner.nextLine().split(" ");
+                if (parts.length < 3) continue;
+                routes.add(new Route(List.of(parts[0].trim(), parts[1].trim()), Integer.parseInt(parts[2].trim())));
+            }
+        }
+    }
 
-        return routes;
+    public List<Route> getRoutes(String origin, String destination) {
+        if (origin == null || destination == null) {
+            return routes.stream()
+                    .sorted(Comparator.comparingInt(Route::getPrice))
+                    .collect(Collectors.toList());
+        }
+        return findAllRoutes(origin, destination).stream()
+                .sorted(Comparator.comparingInt(Route::getPrice))
+                .collect(Collectors.toList());
+    }
+
+    private List<Route> findAllRoutes(String origin, String destination) {
+        List<Route> result = new ArrayList<>();
+        findRoutesRecursive(origin, destination, new ArrayList<>(), 0, result);
+        return result;
+    }
+
+    private void findRoutesRecursive(String current, String destination, List<String> path, int price, List<Route> result) {
+        path.add(current);
+        if (current.equalsIgnoreCase(destination)) {
+            result.add(new Route(new ArrayList<>(path), price));
+        } else {
+            for (Route route : routes) {
+                if (route.getRoute().get(0).equalsIgnoreCase(current) && !path.contains(route.getRoute().get(1))) {
+                    findRoutesRecursive(route.getRoute().get(1), destination, path, price + route.getPrice(), result);
+                }
+            }
+        }
+        path.remove(path.size() - 1);
     }
 }

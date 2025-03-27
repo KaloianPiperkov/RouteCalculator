@@ -15,6 +15,6 @@ public class RouteController {
 
     @RequestMapping(value = "/getRoutes", method = RequestMethod.POST)
     public List<Route> getRoutes(@RequestBody RouteRequest request) {
-        return routeService.findRoutes(request.getOrigin(), request.getDestination());
+        return routeService.getRoutes(request.getOrigin(), request.getDestination());
     }
 }
