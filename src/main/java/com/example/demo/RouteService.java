@@ -24,31 +24,31 @@ public class RouteService {
         }
     }
 
-    public List<Route> getRoutes(String origin, String destination) {
+    public List<Route> getRoutes(String origin, String destination, Integer maxFlights) {
         if (origin == null || destination == null) {
             return routes.stream()
                     .sorted(Comparator.comparingInt(Route::getPrice))
                     .collect(Collectors.toList());
         }
-        return findAllRoutes(origin, destination).stream()
+        return findAllRoutes(origin, destination, maxFlights).stream()
                 .sorted(Comparator.comparingInt(Route::getPrice))
                 .collect(Collectors.toList());
     }
 
-    private List<Route> findAllRoutes(String origin, String destination) {
+    private List<Route> findAllRoutes(String origin, String destination, Integer maxFlights) {
         List<Route> result = new ArrayList<>();
-        findRoutesRecursive(origin, destination, new ArrayList<>(), 0, result);
+        findRoutesRecursive(origin, destination, new ArrayList<>(), 0, result, maxFlights, 0);
         return result;
     }
 
-    private void findRoutesRecursive(String current, String destination, List<String> path, int price, List<Route> result) {
+    private void findRoutesRecursive(String current, String destination, List<String> path, int price, List<Route> result, Integer maxFlights, int currentFlights) {
         path.add(current);
         if (current.equalsIgnoreCase(destination)) {
             result.add(new Route(new ArrayList<>(path), price));
-        } else {
+        } else if (maxFlights == null || currentFlights < maxFlights) {
             for (Route route : routes) {
                 if (route.getRoute().get(0).equalsIgnoreCase(current) && !path.contains(route.getRoute().get(1))) {
-                    findRoutesRecursive(route.getRoute().get(1), destination, path, price + route.getPrice(), result);
+                    findRoutesRecursive(route.getRoute().get(1), destination, path, price + route.getPrice(), result, maxFlights, currentFlights + 1);
                 }
             }
         }

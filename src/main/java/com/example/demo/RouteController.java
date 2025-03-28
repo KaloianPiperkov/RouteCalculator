@@ -1,5 +1,8 @@
 package com.example.demo;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -13,8 +16,11 @@ public class RouteController {
         this.routeService = routeService;
     }
 
-    @RequestMapping(value = "/getRoutes", method = RequestMethod.POST)
+    @PostMapping("/getRoutes")
     public List<Route> getRoutes(@RequestBody RouteRequest request) {
-        return routeService.getRoutes(request.getOrigin(), request.getDestination());
+        if (request.getOrigin() == null || request.getDestination() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Origin and Destination are required");
+        }
+        return routeService.getRoutes(request.getOrigin(), request.getDestination(), request.getMax_flights());
     }
 }
